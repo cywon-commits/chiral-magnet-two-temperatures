@@ -36,12 +36,16 @@ def mbar(Ts, Es, N, Tgrid):
     b = 1.0 / np.asarray(Ts); X = np.concatenate(Es) * N; Nk = np.array([len(e) for e in Es], float)
     X0 = X.mean(); X = X - X0
     u = np.outer(b, X)                     # (K, Ntot) reduced energies
-    f = np.zeros(len(b))
-    for it in range(20000):
-        den = logsumexp(np.log(Nk)[:, None] + f[:, None] - u, axis=0)   # (Ntot,)
-        fn = -logsumexp(-u - den[None, :], axis=1); fn -= fn[0]
-        if np.max(np.abs(fn - f)) < 1e-10: f = fn; break
-        f = fn
+    from scipy.optimize import minimize
+    lN = np.log(Nk)
+    def obj(g):  # convex MBAR objective, f_0 fixed to 0
+        f = np.r_[0.0, g]; a = lN[:, None] + f[:, None] - u; den = logsumexp(a, axis=0)
+        w = np.exp(a - den[None, :]).sum(1)
+        return den.sum() - (Nk * f).sum(), (w - Nk)[1:]
+    # initial guess: f_k by trapezoidal integration of <u> (thermodynamic integration)
+    Um = np.array([e.mean() * N for e in Es]) - X0; f0 = np.r_[0, np.cumsum(0.5 * (Um[1:] + Um[:-1]) * np.diff(b))]
+    sol = minimize(obj, f0[1:], jac=True, method='L-BFGS-B', options=dict(maxiter=5000, gtol=1e-6, ftol=1e-15))
+    f = np.r_[0.0, sol.x]
     den = logsumexp(np.log(Nk)[:, None] + f[:, None] - u, axis=0)
     C = np.empty(len(Tgrid)); ess = np.empty(len(Tgrid)); U = np.empty(len(Tgrid))
     for j, T in enumerate(Tgrid):
