@@ -30,7 +30,8 @@ for (proto, D, L, dirn), rs in sorted(g.items()):
     e['ess_min'] = float(min(r['ess_min'] for r in rs))
     e['max_abs_drift_sigma'] = float(max(np.max(np.abs(r['drift_sigma'])) for r in rs))
     e['tau_mean'] = float(np.mean([np.mean(r['tau']) for r in rs]))
-    for key, tkey in (('U', 'T'), ('Cfl', 'T'), ('Cdu', 'Tdu'), ('Cmh', 'Tmh_grid'), ('S0', 'T')):
+    for key, tkey in (('U', 'T'), ('Cfl', 'T'), ('Cdu', 'Tdu'), ('Cmh', 'Tmh_grid'), ('S0', 'T'), ('cos4', 'T'), ('e2', 'T'), ('xi_oz', 'T')):
+        if key not in rs[0]: continue
         A = np.array([r[key] for r in rs]); e['curve_' + key] = dict(T=rs[0][tkey], mean=A.mean(0).tolist(),
                                                                      err=(A.std(0, ddof=1) / np.sqrt(len(rs))).tolist() if len(rs) > 1 else None)
     out.append(e)

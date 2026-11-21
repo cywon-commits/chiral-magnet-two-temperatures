@@ -50,6 +50,19 @@ def mbar(Ts, Es, N, Tgrid):
         U[j] = (m1 + X0) / N; C[j] = m2 / N / T ** 2; ess[j] = 1.0 / (w ** 2).sum()
     return U, C, ess
 
+def xi_oz(Sk_low, L, kc):
+    """Ornstein-Zernike fit 1/S(k) = A (1 + xi^2 khat^2) on the unaveraged low-k crop, k != 0,
+    self-consistent window khat*xi < 2 (at least the 4 smallest |k| shells)."""
+    n = np.arange(-kc, kc + 1); NX, NY = np.meshgrid(n, n, indexing='ij')
+    k2 = (4 * np.sin(np.pi * NX / L) ** 2 + 4 * np.sin(np.pi * NY / L) ** 2).ravel(); y = 1.0 / Sk_low.ravel()
+    nz = k2 > 0; k2 = k2[nz]; y = y[nz]; shells = np.unique(np.round(k2, 12))
+    xg = 5.0
+    for it in range(10):
+        sel = np.sqrt(k2) * xg < 2.0
+        if len(np.unique(np.round(k2[sel], 12))) < 4: sel = k2 <= shells[3] + 1e-12
+        c = np.polyfit(k2[sel], y[sel], 1); xg = np.sqrt(max(c[0] / c[1], 1e-6))
+    return float(xg)
+
 def analyze_run(fn):
     d = np.load(fn); N = int(d['L']) ** 2; neq = int(d['neq'])
     out = []
@@ -77,6 +90,9 @@ def analyze_run(fn):
                  Tstar_du={str(w): float(qpeak(Tc, Cdu, w)) for w in WINDOWS},
                  Cmax_fl=float(Cfl.max()),
                  S0=d['S0'][m][o].tolist(), Sk_rad=d['Sk_rad'][m][o].tolist())
+        if 'cos4' in d:
+            r['cos4'] = d['cos4'][m][o].tolist(); r['e2'] = d['e2'][m][o].tolist()
+            r['xi_oz'] = [xi_oz(sk, int(d['L']), int(d['kc'])) for sk in d['Sk_low'][m][o]]
         out.append(r)
     return out
 
