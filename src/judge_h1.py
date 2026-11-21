@@ -77,3 +77,22 @@ if q:
         e = get('anneal', 0.3, 176, dirn)
         if e: print('   anneal D=0.3 L=176 %s: T*(du)=%.4f +- %.4f' % (dirn, e['Tstar_du'][0], e['Tstar_du'][1]))
 json.dump(J, open('data/task1_h1.json', 'w'), indent=1, default=float)
+
+# ---------------- post-hoc supplementary analyses (NOT part of the pre-registered criterion) ----------------
+print('\n[post hoc 1] dU/dT only: sigma = stat (+) window (+) cool/heat  (estimator spread excluded)')
+print('[post hoc 2] rescaled T*/sqrt(1+D^2) (J_eff = sqrt(J^2+D^2), exact for a 1D chain under the local spin rotation)')
+ph = []
+for label, sizes in (('main', big), ('aux', small)):
+    ref = rows.get((0.0, 256)) if label == 'main' else rows.get((0.0, 128))
+    if ref is None: continue
+    s0 = np.sqrt(ref['stat'] ** 2 + ref['s_win'] ** 2 + ref['s_hys'] ** 2)
+    for D, L in sorted(sizes.items()):
+        r = rows.get((D, L))
+        if r is None: continue
+        s = np.sqrt(r['stat'] ** 2 + r['s_win'] ** 2 + r['s_hys'] ** 2); comb = np.hypot(s, s0)
+        Tr = r['T'] / np.sqrt(1 + D * D); sr = s / np.sqrt(1 + D * D); combr = np.hypot(sr, s0)
+        z1 = (r['T'] - ref['T']) / comb; z2 = (Tr - ref['T']) / combr
+        ph.append(dict(set=label, D=D, L=L, ref_L=ref['L'], dT=r['T'] - ref['T'], sig=comb, z=z1, T_rescaled=Tr, dT_rescaled=Tr - ref['T'], z_rescaled=z2))
+        print('  %-4s D=%.1f L=%-3d vs D=0 L=%d: dT*=%+.4f +- %.4f (z=%+.1f) | T*/sqrt(1+D^2)=%.4f, diff %+.4f (z=%+.1f)' % (label, D, L, ref['L'], r['T'] - ref['T'], comb, z1, Tr, Tr - ref['T'], z2))
+J['posthoc'] = ph
+json.dump(J, open('data/task1_h1.json', 'w'), indent=1, default=float)

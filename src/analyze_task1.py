@@ -101,7 +101,7 @@ def analyze_run(fn):
     return out
 
 if __name__ == '__main__':
-    files = sorted(glob.glob('data/raw/t1_*.npz'))
+    files = sorted(f for f in glob.glob('data/raw/t1_*.npz') if not f.endswith('.ckpt.npz'))
     res = []
     for fn in files:
         d = np.load(fn)
