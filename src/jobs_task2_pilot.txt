@@ -1,0 +1,7 @@
+pilot 0.1 256 1
+pilot 0.0 256 1
+pilot 0.15 168 1
+pilot 0.2 128 1
+pilot 0.3 88 1
+pilot 0.4 64 1
+pilot 0.5 56 1

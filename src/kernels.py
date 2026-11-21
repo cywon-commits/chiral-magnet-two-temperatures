@@ -73,3 +73,19 @@ def seed(n):
 def random_state(L, rng):
     S = rng.standard_normal((L, L, 3)); S /= np.linalg.norm(S, axis=-1, keepdims=True)
     return S
+
+
+@njit(cache=True)
+def bond_sums(S):
+    """Per spin: x = sum over the 2 bonds (+x,+y) of S_i.S_j ; c = sum over the 2 bonds of r_ij.(S_i x S_j).
+    Energy per spin e = -J x - D c ; bond chiral correlation <C> = c/2 ; exchange per bond <S.S> = x/2."""
+    L = S.shape[0]; x = 0.0; c = 0.0
+    for i in range(L):
+        for j in range(L):
+            ip = (i + 1) % L; jp = (j + 1) % L
+            ax, ay, az = S[i, j, 0], S[i, j, 1], S[i, j, 2]
+            bx, by, bz = S[ip, j, 0], S[ip, j, 1], S[ip, j, 2]          # r_ij = +x
+            x += ax * bx + ay * by + az * bz; c += ay * bz - az * by      # x-component of S_i x S_j
+            bx, by, bz = S[i, jp, 0], S[i, jp, 1], S[i, jp, 2]          # r_ij = +y
+            x += ax * bx + ay * by + az * bz; c += az * bx - ax * bz      # y-component of S_i x S_j
+    return x / (L * L), c / (L * L)
