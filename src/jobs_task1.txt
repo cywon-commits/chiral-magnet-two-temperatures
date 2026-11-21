@@ -46,3 +46,11 @@ anneal 0.5 56 4
 anneal 0.5 56 3
 anneal 0.5 56 2
 anneal 0.5 56 1
+anneal 0.1 256 1
+anneal 0.1 256 2
+anneal 0.1 256 3
+anneal 0.1 256 4
+anneal 0.15 168 1
+anneal 0.15 168 2
+anneal 0.15 168 3
+anneal 0.15 168 4
