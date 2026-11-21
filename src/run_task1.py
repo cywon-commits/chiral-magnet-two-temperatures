@@ -70,17 +70,32 @@ def save():
                         kbin_width=0.25, Sk_low=np.array(rec['Sk_low']), kc=kc, ring_nq=nq,
                         cos4=np.array(rec['cos4']), e2=np.array(rec['e2']))
 
-S = random_state(L, rng)
+# ---- stage list (restartable: checkpoint after every stage) ----
 if a.proto == 'anneal':
-    for T in (1.0, 0.95, 0.9, 0.85):
+    stages = [('pre', T, '') for T in (1.0, 0.95, 0.9, 0.85)] + [('meas', T, 'cool') for T in grid] + \
+             [('pre', T, '') for T in (0.575, 0.55, 0.525, 0.50, 0.525, 0.55, 0.575)] + [('meas', T, 'heat') for T in grid[::-1]]
+else:
+    stages = [('quenchprep', a.tq, '')] + [('meas', T, 'quench') for T in grid[::-1]]
+ck = fn.replace('.npz', '.ckpt.npz')
+start = 0; S = random_state(L, rng); Sq = None
+if os.path.exists(ck) and os.path.exists(fn):
+    c = np.load(ck); start = int(c['next_stage']); S = c['S'].copy(); Sq = c['Sq'].copy() if c['Sq'].size > 1 else None
+    d = np.load(fn)
+    nm = int(sum(1 for st in stages[:start] if st[0] == 'meas'))
+    for k in ('T', 'dirn', 'E', 'Sk_rad', 'S0', 'acc', 'Sk_low', 'cos4', 'e2'): rec[k] = list(d[k][:nm])
+    # numba RNG state cannot be restored: reseed deterministically from (seed, stage)
+    nseed(1000 * a.seed + 17 + 7919 * start)
+    print('resume from stage %d/%d (%d temperatures measured)' % (start, len(stages), nm), flush=True)
+for k in range(start, len(stages)):
+    kind, T, dirn = stages[k]
+    if kind == 'pre':
         for _ in range(a.neq): sweep(S, T, J, D, sig(T))
-    for T in grid: measure(S, T, 'cool')
-    for T in (0.575, 0.55, 0.525, 0.50, 0.525, 0.55, 0.575):
-        for _ in range(a.neq): sweep(S, T, J, D, sig(T))
-    for T in grid[::-1]: measure(S, T, 'heat')
-elif a.proto == 'quench':
-    for _ in range(a.nq): sweep(S, a.tq, J, D, sig(a.tq))
-    Sq = S.copy()
-    for T in grid[::-1]:
-        S = Sq.copy(); measure(S, T, 'quench')
+    elif kind == 'quenchprep':
+        for _ in range(a.nq): sweep(S, T, J, D, sig(T))
+        Sq = S.copy()
+    else:
+        if a.proto == 'quench': S = Sq.copy()
+        measure(S, T, dirn)
+    np.savez(ck, next_stage=k + 1, S=S, Sq=Sq if Sq is not None else np.zeros(1))
+os.remove(ck)
 print('done', fn, '%.0fs' % (time.time() - t0))
