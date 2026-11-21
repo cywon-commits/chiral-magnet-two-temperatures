@@ -25,9 +25,10 @@ def tstar(D, L, proto='anneal'):
                 est=est, mh_used=mh_ok, cool=mc, heat=mh_)
 
 big = {0.2: 256, 0.3: 176, 0.4: 128, 0.5: 112}; small = {0.2: 128, 0.3: 88, 0.4: 64, 0.5: 56}
+extra = {0.1: 256, 0.15: 168}   # [V-2] D^2 check, L/lambda~4; not part of the pre-registered sets
 rows = {}
 print('%-5s %-4s %-7s %-7s %-7s %-7s | est %-6s win %-6s hys %-6s | cool    heat    | estimators' % ('D', 'L', 'T*', 'stat', 'syst', 'tot', '', '', ''))
-for D, L in [(0.0, 64), (0.0, 128), (0.0, 256)] + sorted(small.items()) + sorted(big.items()):
+for D, L in [(0.0, 64), (0.0, 128), (0.0, 256)] + sorted(extra.items()) + sorted(small.items()) + sorted(big.items()):
     r = tstar(D, L)
     if r is None: continue
     rows[(D, L)] = r
