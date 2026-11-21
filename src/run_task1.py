@@ -8,7 +8,9 @@ Protocols
 Per measured T: NEQ sweeps equilibration + NMEAS sweeps measurement; energy per spin stored at EVERY
 sweep (including equilibration) so that drift and hysteresis can be checked afterwards.
 S(k) (sum over spin components, |F|^2/N) accumulated every 10 measurement sweeps; stored as a radial
-profile in bins of width 0.25 (in units of 2pi/L) plus S(0).
+profile in bins of width 0.25 (in units of 2pi/L) plus S(0); also (review V-1 #4) the unaveraged S(k) on
+|kx|,|ky|<=kc (fftshifted, index kc = k=0) and, for D>0, ring-weighted <cos4phi> and |<e^{2i phi}>|
+(ring 0.6..1.5 x nq, nq = L sqrt2 arctan(D/sqrt2)/2pi, as in prelim/aniso.py).
 Output: data/raw/t1_<proto>_D<D>_L<L>_s<seed>.npz (not committed).
 """
 import numpy as np, sys, os, time, argparse
@@ -28,9 +30,15 @@ nseed(1000 * a.seed + 17); rng = np.random.default_rng(1000 * a.seed + 17)
 kx = np.fft.fftfreq(L) * L; KX, KY = np.meshgrid(kx, kx, indexing='ij'); KR = np.sqrt(KX ** 2 + KY ** 2)
 kbin = np.floor(KR / 0.25).astype(int).ravel(); nbin = int(L / 2 / 0.25)
 cnt = np.bincount(kbin, minlength=kbin.max() + 1)[:nbin]
+# [V-1 #4] unaveraged low-k S(k): crop |kx|,|ky| <= kc (kc >= 6, and >= 2 x ring radius for D>0)
+PHI = np.arctan2(KY, KX)
+nq = L * np.sqrt(2) * np.arctan(D / np.sqrt(2)) / (2 * np.pi) if D > 0 else 0.0   # ring radius (diagonal helix), units 2pi/L
+kc = int(max(6, np.ceil(2 * nq)))
+cidx = np.r_[0:kc + 1, L - kc:L]
+ring = (KR > 0.6 * nq) & (KR < 1.5 * nq) if D > 0 else np.zeros_like(KR, bool)
 grid = np.round(np.arange(0.80, 0.60 - 1e-9, -0.01), 3)
 sig = lambda T: min(1.5, 1.2 * np.sqrt(T))
-rec = dict(T=[], dirn=[], E=[], Sk_rad=[], S0=[], acc=[])
+rec = dict(T=[], dirn=[], E=[], Sk_rad=[], S0=[], acc=[], Sk_low=[], cos4=[], e2=[])
 t0 = time.time()
 
 def measure(S, T, dirn):
@@ -44,6 +52,13 @@ def measure(S, T, dirn):
     rec['T'].append(T); rec['dirn'].append(dirn); rec['E'].append(E); rec['acc'].append(acc / len(E))
     rec['Sk_rad'].append((np.bincount(kbin, Sk.ravel(), minlength=len(cnt))[:nbin] / np.maximum(cnt, 1)))
     rec['S0'].append(Sk[0, 0])
+    rec['Sk_low'].append(np.fft.fftshift(Sk[np.ix_(cidx, cidx)]).astype(np.float32))
+    if ring.any():
+        w = Sk[ring]; ph = PHI[ring]
+        rec['cos4'].append((w * np.cos(4 * ph)).sum() / w.sum())
+        rec['e2'].append(np.hypot((w * np.cos(2 * ph)).sum(), (w * np.sin(2 * ph)).sum()) / w.sum())
+    else:
+        rec['cos4'].append(np.nan); rec['e2'].append(np.nan)
     m = E[a.neq:]
     print('%s D=%.2f L=%d s=%d %s T=%.3f U=%.5f C=%.3f  t=%.0fs' % (a.proto, D, L, a.seed, dirn, T, m.mean(), L * L * m.var() / T ** 2, time.time() - t0), flush=True)
     save()
@@ -52,7 +67,8 @@ def save():
     np.savez_compressed(fn, D=D, L=L, seed=a.seed, proto=a.proto, neq=a.neq, nmeas=a.nmeas,
                         T=np.array(rec['T']), dirn=np.array(rec['dirn']), E=np.array(rec['E'], np.float64),
                         Sk_rad=np.array(rec['Sk_rad']), S0=np.array(rec['S0']), acc=np.array(rec['acc']),
-                        kbin_width=0.25)
+                        kbin_width=0.25, Sk_low=np.array(rec['Sk_low']), kc=kc, ring_nq=nq,
+                        cos4=np.array(rec['cos4']), e2=np.array(rec['e2']))
 
 S = random_state(L, rng)
 if a.proto == 'anneal':
