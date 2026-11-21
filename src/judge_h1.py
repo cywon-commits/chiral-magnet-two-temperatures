@@ -43,7 +43,7 @@ def judge(sizes, label):
     for D, L in sorted(sizes.items()):
         r = rows.get((D, L))
         if r is None: continue
-        ref = rows.get((0.0, L)) if (same_L and (0.0, L) in rows) else (rows.get((0.0, L)) if label.startswith('aux') and (0.0, L) in rows else r256)
+        ref = rows.get((0.0, L)) if (same_L and (0.0, L) in rows) else r256   # [R-2] rule, same for main and aux
         diff = r['T'] - ref['T']; comb = np.hypot(r['tot'], ref['tot']); z = diff / comb
         res.append(dict(D=D, L=L, ref_L=ref['L'], diff=diff, comb=comb, z=z))
         print('  D=%.1f L=%d vs D=0 L=%d: dT*=%+.4f  comb.err=%.4f  z=%+.2f' % (D, L, ref['L'], diff, comb, z))
@@ -83,7 +83,7 @@ print('\n[post hoc 1] dU/dT only: sigma = stat (+) window (+) cool/heat  (estima
 print('[post hoc 2] rescaled T*/sqrt(1+D^2) (J_eff = sqrt(J^2+D^2), exact for a 1D chain under the local spin rotation)')
 ph = []
 for label, sizes in (('main', big), ('aux', small)):
-    ref = rows.get((0.0, 256)) if label == 'main' else rows.get((0.0, 128))
+    ref = rows.get((0.0, 256))
     if ref is None: continue
     s0 = np.sqrt(ref['stat'] ** 2 + ref['s_win'] ** 2 + ref['s_hys'] ** 2)
     for D, L in sorted(sizes.items()):

@@ -16,5 +16,5 @@ for ax, (D, Ls) in zip(axs, sizes.items()):
                 c = e['curve_Cfl']; ax.errorbar(c['T'], c['mean'], yerr=c['err'], ls='none', marker=DMRK[D], mfc='none', color=DCOL[D], alpha=0.6, label='L=%d C_fl' % L)
     ax.set_title('D = %.1f' % D); ax.set_xlabel('T  [J/k_B]'); ax.legend(fontsize=7)
 axs[0].set_ylabel('C per spin  [k_B]')
-fig.suptitle('Specific heat: lines = dU/dT (central difference, solid cool / dashed heat), open markers = N var(e)/T^2', fontsize=10)
+fig.suptitle('Specific heat: lines = dU/dT (central difference, solid cool / dashed heat), open markers = N var(e)/T^2', fontsize=10, y=1.06)
 fig.savefig('figures/fig_t1_C.png')
