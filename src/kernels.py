@@ -118,3 +118,18 @@ def accum_moments(S, acc):
             acc[i, j, 0] += x; acc[i, j, 1] += y; acc[i, j, 2] += z
             acc[i, j, 3] += x * x; acc[i, j, 4] += y * y; acc[i, j, 5] += z * z
             acc[i, j, 6] += x * y; acc[i, j, 7] += x * z; acc[i, j, 8] += y * z
+
+
+@njit(cache=True)
+def zero_T_relax(S, J, D, nsweep):
+    """T = 0 quench: align each spin with its local field (checkerboard), nsweep sweeps."""
+    L = S.shape[0]
+    for _ in range(nsweep):
+        for par in range(2):
+            for i in range(L):
+                for j in range(L):
+                    if (i + j) % 2 != par: continue
+                    bx, by, bz = local_field(S, i, j, L, J, D)
+                    b = np.sqrt(bx * bx + by * by + bz * bz)
+                    if b > 1e-12:
+                        S[i, j, 0] = bx / b; S[i, j, 1] = by / b; S[i, j, 2] = bz / b
