@@ -89,3 +89,32 @@ def bond_sums(S):
             bx, by, bz = S[i, jp, 0], S[i, jp, 1], S[i, jp, 2]          # r_ij = +y
             x += ax * bx + ay * by + az * bz; c += az * bx - ax * bz      # y-component of S_i x S_j
     return x / (L * L), c / (L * L)
+
+
+@njit(cache=True)
+def bond_sums_dir(S):
+    """Per spin, by bond direction: (xx, xy, cx, cy) with xx = sum_i S_i.S_{i+x}, cx = sum_i x.(S_i x S_{i+x}), etc.
+    e = -J (xx + xy) - D (cx + cy)."""
+    L = S.shape[0]; xx = 0.0; xy = 0.0; cx = 0.0; cy = 0.0
+    for i in range(L):
+        for j in range(L):
+            ip = (i + 1) % L; jp = (j + 1) % L
+            ax, ay, az = S[i, j, 0], S[i, j, 1], S[i, j, 2]
+            bx, by, bz = S[ip, j, 0], S[ip, j, 1], S[ip, j, 2]
+            xx += ax * bx + ay * by + az * bz; cx += ay * bz - az * by
+            bx, by, bz = S[i, jp, 0], S[i, jp, 1], S[i, jp, 2]
+            xy += ax * bx + ay * by + az * bz; cy += az * bx - ax * bz
+    n = L * L
+    return xx / n, xy / n, cx / n, cy / n
+
+
+@njit(cache=True)
+def accum_moments(S, acc):
+    """acc[..., 0:3] += S ; acc[..., 3:9] += (SxSx, SySy, SzSz, SxSy, SxSz, SySz)."""
+    L = S.shape[0]
+    for i in range(L):
+        for j in range(L):
+            x, y, z = S[i, j, 0], S[i, j, 1], S[i, j, 2]
+            acc[i, j, 0] += x; acc[i, j, 1] += y; acc[i, j, 2] += z
+            acc[i, j, 3] += x * x; acc[i, j, 4] += y * y; acc[i, j, 5] += z * z
+            acc[i, j, 6] += x * y; acc[i, j, 7] += x * z; acc[i, j, 8] += y * z

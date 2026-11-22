@@ -6,7 +6,8 @@ python3 - "$JOBS" <<'PY' > logs/pending2.txt
 import os, sys
 for line in open(sys.argv[1]):
     tag, D, L, s = line.split(); fn = 'data/raw/t2_%s_D%03d_L%s_s%s.npz' % (tag, round(float(D) * 100), L, s)
-    if os.path.exists(fn) and not os.path.exists(fn.replace('.npz', '.ckpt.npz')): continue
+    if os.path.exists(fn.replace('.npz', '/DONE')): continue          # v2 layout
+    if os.path.exists(fn) and not os.path.isdir(fn.replace('.npz', '')) and not os.path.exists(fn.replace('.npz', '.ckpt.npz')): continue  # v1 (pilot)
     print(line.strip())
 PY
 echo "pending: $(wc -l < logs/pending2.txt)"
