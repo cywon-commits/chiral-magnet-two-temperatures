@@ -5,3 +5,5 @@ logs/
 export/
 review/data/*.npz
 review/data/log_*.txt
+review/data/Kh_*.npz
+review/data/log_Kh_*.txt
