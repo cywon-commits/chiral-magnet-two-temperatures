@@ -12,7 +12,7 @@ def tau_int(x, c=6.0):
         t += acf[w]
         if w >= c * t: break
     return t
-out = {}
+out = json.load(open('data/task6_posthoc.json'))['tau'] if os.path.exists('data/task6_posthoc.json') else {}   # keep runs whose raw data were deleted
 for d in sorted(glob.glob('data/raw/t2_small_*_s*/')):
     run = os.path.basename(d.rstrip('/')); rows = []
     for f in sorted(glob.glob(d + 'T*.npz')):
