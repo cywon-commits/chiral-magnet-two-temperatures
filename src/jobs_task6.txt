@@ -1,0 +1,5 @@
+small 0.05 1024 1 --thi 0.72 --tlo 0.56 --dt 0.01 --neq 1000 --nmeas 6000
+small 0.05 512 1 --thi 0.80 --tlo 0.50 --dt 0.01 --neq 1000 --nmeas 4000
+small 0.05 512 2 --thi 0.80 --tlo 0.50 --dt 0.01 --neq 1000 --nmeas 4000
+small 0.075 384 1 --thi 0.80 --tlo 0.50 --dt 0.01 --neq 1000 --nmeas 4000
+small 0.075 384 2 --thi 0.80 --tlo 0.50 --dt 0.01 --neq 1000 --nmeas 4000

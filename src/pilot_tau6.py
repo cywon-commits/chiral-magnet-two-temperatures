@@ -4,7 +4,13 @@ Anneal 0.80 -> 0.60 in steps 0.02 (NANN sweeps each), NEQ equilibration, NMEAS m
 import numpy as np, sys, os, time, json
 sys.path.insert(0, os.path.dirname(__file__))
 from kernels import sweep, energy, seed as nseed, random_state
-from pilot_tau import tau_int
+def tau_int(x, c=6.0):
+    x = x - x.mean(); n = len(x); f = np.fft.rfft(x, 2 * n); acf = np.fft.irfft(f * np.conj(f))[:n]; acf /= acf[0]
+    t = 0.5
+    for w in range(1, n):
+        t += acf[w]
+        if w >= c * t: break
+    return t
 D = float(sys.argv[1]); L = int(sys.argv[2]); T = float(sys.argv[3]); NANN, NEQ, NMEAS = (int(x) for x in sys.argv[4:7])
 nseed(11); S = random_state(L, np.random.default_rng(11)); sig = lambda t: min(1.5, 1.2 * np.sqrt(t)); t0 = time.time()
 for t in np.arange(0.80, T + 1e-9, -0.02):
