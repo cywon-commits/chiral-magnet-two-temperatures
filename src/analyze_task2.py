@@ -55,7 +55,7 @@ def analyze(fn):
     X = d['X'][:, neq:]; Cb = d['Cb'][:, neq:]; nb = 20; m = X.shape[1] // nb * nb
     r['SS'] = (X.mean(1) / 2).tolist(); r['C'] = (Cb.mean(1) / 2).tolist()
     r['C_err'] = (Cb[:, :m].reshape(len(T), nb, -1).mean(2).std(1, ddof=1) / np.sqrt(nb) / 2).tolist()
-    e = -X - D * Cb; r['U'] = e.mean(1).tolist(); r['Cv'] = (L * L * e.var(1) / T ** 2).tolist()
+    e = -X - D * Cb; r['U'] = e.mean(1).tolist(); r['sU'] = (e[:, :m].reshape(len(T), nb, -1).mean(2).std(1, ddof=1) / np.sqrt(nb)).tolist(); r['Cv'] = (L * L * e.var(1) / T ** 2).tolist()
     r['S0'] = [float(s[kc, kc]) for s in d['Sk_low']]
     rad = d['Sk_rad']; kb = (np.arange(rad.shape[1]) + 0.5) * 0.25 * 2 * np.pi / L
     r['kmax_rad'] = [float(kb[np.argmax(p)]) if np.argmax(p) > 0 else 0.0 for p in rad]
