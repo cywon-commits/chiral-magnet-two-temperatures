@@ -3,3 +3,5 @@ __pycache__/
 data/raw/
 logs/
 export/
+review/data/*.npz
+review/data/log_*.txt
