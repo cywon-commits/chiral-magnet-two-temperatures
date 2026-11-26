@@ -1,0 +1,13 @@
+# Table I of the manuscript. T* : task-1 heating/cooling analysis (D = 0-0.5) and task-6 judge (D = 0.05, 0.075).
+# T_ring : data/task2_h2.json (D = 0.1-0.5) and data/task6_judge.json (D = 0.05 L=512, 0.075); err = stat (+) window.
+# T_ring_ext : review/data/t6_kappa_window.json (window extrapolated to zero; D = 0.05 uses L = 1024).
+D,Tstar,Tstar_err,Tring,Tring_err,Tring_ext
+0.0,0.680,0.009,,,
+0.05,0.683,0.005,0.616,0.005,0.6267
+0.075,0.680,0.002,0.649,0.008,0.6586
+0.1,0.684,0.005,0.679,0.017,0.6824
+0.15,0.693,0.003,0.727,0.012,0.7399
+0.2,0.696,0.002,0.771,0.021,0.7747
+0.3,0.708,0.005,0.854,0.018,0.8598
+0.4,0.709,0.010,0.946,0.029,0.9687
+0.5,0.729,0.011,1.056,0.032,1.0646
